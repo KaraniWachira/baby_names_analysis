@@ -1,0 +1,153 @@
+---
+title: "Baby Names Exploration"
+author: "Keith Karani"
+format: html
+editor: visual
+---
+
+## Introduction
+
+`babynames` describes the popularity of different children names as recorded by the United States Social Security Administration. The data set contains five variables:
+
+-   `name` - A name
+
+-   `year` - A year
+
+-   `sex` - A biological sex (`"F"` = Female, `"M"` = Male)
+
+-   `n` - The *number* of children of that sex who were given that name in that year
+
+-   `prop` - The *proportion* of children of that sex who were given that name in that yearRunning Code
+
+```{r}
+#install required packages
+
+install.packages("tidyverse")
+
+```
+
+load libraries to use
+
+```{r}
+# load libraries to use
+library(dplyr)
+library(ggplot2)
+library(babynames)
+
+```
+
+Exploration 01:
+
+-   How many names are in babynames data set?
+
+-   what years does babynames cover?
+
+-   Does `babynames` include *every* name or just the ones that meet a certain cutoff?
+
+```{r}
+#investigate the structure of our data
+str(babynames)
+
+View(babynames)
+
+
+baby_data <- babynames |> 
+    summarize(
+        n_names = n_distinct(name),
+        min_n = min(n),
+        first_year = min(year),
+        last_year = max(year)
+    ) 
+baby_data
+
+```
+
+## observation:
+
+babynames includes every name given to at least five children of each sex between the years 1880 and 2017.
+
+Babynames is a fascinating data set because it allows us to research trends in how Americans name their children.
+
+Exploration 02: can we find out the most popular boys names in 2017, sorted by n?
+
+```{r}
+pop_boy_names <- babynames |> 
+    filter(year == 2017, sex == "M") %>% 
+    arrange(desc(n))
+
+pop_boy_names
+
+```
+
+Exploration 03:
+
+we can also look at the all-time most popular names. For instance all-time most popular girls when we sum the number of girls who have been given each name over the years.
+
+```{r}
+most_popular_girls <- babynames |>  
+    filter(sex == "F") |>  
+    group_by(name) |>  
+    summarize(
+        total_n = sum(n),
+    ) |> 
+    arrange(desc(total_n))
+
+head(most_popular_girls)
+
+
+```
+
+what about the most popular boys when we sum the number of boys who have been giveb each name over the years
+
+```{r}
+most_popular_boys <- babynames |> 
+  filter(sex == "M") |> 
+  group_by(name) |> 
+  summarize(
+    total_n = sum(n),
+  ) |> 
+  arrange(desc(total_n))
+  
+head(most_popular_boys)
+
+```
+
+Exploration 04:
+
+John is one of the all-time most popular boys names, even though John did not appear in the top 10 most popular boys names for 2017. Did it recently drop off in popularity?
+
+Let’s use a graph to investigate the history of the name John
+
+```{r}
+babynames %>% 
+  filter(sex != "F", name == "John" | name == "James", na.rm = TRUE) %>% 
+  ggplot(aes(x = year, y = prop, color = name)) + 
+    geom_line() +
+  theme_minimal() +
+  labs(
+    title = "History of the name John and James",
+    caption = "Source: Full baby name data provided by the SSA"
+  )
+
+```
+
+Exploration 05:
+
+we can visualize the number of children born in the United States for each year
+
+```{r}
+babynames %>% 
+  group_by(year, sex) %>% 
+  summarize(
+    births = sum(n)
+  ) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = year, y = births, color = sex)) +
+  geom_line() +
+  labs(
+    title = "Estimated births by year",
+    caption = "Source: Full baby name data provided by the SSA"
+    ) +
+  theme_minimal()
+
+```
